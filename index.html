@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>酒馆怎么玩：角色、世界、记忆和预设</title>
+  <meta name="description" content="以自己的 SillyTavern 为例，聊聊酒馆与带记忆角色扮演 agent 的区别、四个基础功能，以及小猫之神和夏瑾两套预设。">
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:url" content="https://lihuifree.github.io/sillytavern-guide/">
+  <meta property="og:title" content="酒馆怎么玩：角色、世界、记忆和预设">
+  <meta property="og:description" content="一篇给新玩家的简短介绍：认识角色卡、世界书、用户人设和剧情分支，再看看小猫之神与夏瑾。">
+  <meta name="theme-color" content="#f5f3ed">
+  <link rel="canonical" href="https://lihuifree.github.io/sillytavern-guide/">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body id="top">
+  <a class="skip-link" href="#article">跳到正文</a>
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="酒馆手记，回到顶部"><span class="mark" aria-hidden="true">酒</span>酒馆手记</a>
+    <span class="site-note">一个玩家的入门分享</span>
+  </header>
+
+  <main id="article">
+    <article>
+      <header class="article-header">
+        <p class="eyebrow">SILLYTAVERN / 入门</p>
+        <h1>酒馆怎么玩<span>角色、世界、记忆和预设</span></h1>
+        <div class="article-meta"><time datetime="2026-11-03">2026 年 11 月 3 日</time><span aria-hidden="true">·</span><span>约 3 分钟</span></div>
+        <p class="intro">SillyTavern，大家常说的“酒馆”，是一款开源的 AI 聊天前端。它负责组织角色设定、背景资料和聊天记录，再交给接入的模型生成回复。模型可以通过 API 接入，所以换模型时，也能继续使用自己的角色卡和故事。</p>
+      </header>
+
+      <nav class="contents" aria-label="文章目录">
+        <a href="#memory"><span aria-hidden="true">01</span>角色与记忆</a>
+        <a href="#basics"><span aria-hidden="true">02</span>基础功能</a>
+        <a href="#presets"><span aria-hidden="true">03</span>常用预设</a>
+      </nav>
+
+      <section id="memory" aria-labelledby="memory-title">
+        <div class="section-heading"><span class="section-number" aria-hidden="true">01</span><h2 id="memory-title">角色与记忆</h2></div>
+        <p>如果你熟悉的是设定好人物、让系统自动记住往事的成品角色扮演 agent，酒馆的特点是把更多控制项直接交到你手里：谁来演、你扮演谁、故事发生在哪里、用什么文风，以及从哪个节点换一种剧情走向。</p>
+        <p>比如玩一段侦探故事，你可以给角色写好性格，用世界书放城市和组织背景，再从某次审问处分支，尝试另一种选择。你既能作为人物参与，也能调整故事的规则。</p>
+        <p>两者的能力有重叠。<strong>“记住”也不等于“聊天记录存着”</strong>：每次发给模型的内容受上下文长度限制。酒馆可以配合摘要、检索或数据库扩展保留旧剧情，但需要相应配置，也不能保证永不遗忘。</p>
+      </section>
+
+      <section id="basics" aria-labelledby="basics-title">
+        <div class="section-heading"><span class="section-number" aria-hidden="true">02</span><h2 id="basics-title">四个基础功能</h2></div>
+        <p>刚开始，认识这几个功能就够了：</p>
+        <ul class="feature-list">
+          <li><h3>角色卡<span>决定和谁玩</span></h3><p>打包人物性格、身份、开场白和示例对话；有的卡还包含一整套故事场景。导入后就能按设定开始聊天。</p></li>
+          <li><h3>用户人设<span>决定自己是谁</span></h3><p>可以设成旅人、侦探或角色的旧友，把身份和背景保存下来，减少反复交代。</p></li>
+          <li><h3>世界书<span>放故事的背景资料</span></h3><p>地点、组织、人物关系都能拆成条目，按关键词触发或设为常驻。它通常是设定库，并不会自动记下所有剧情。</p></li>
+          <li><h3>重生成和分支<span>尝试不同走向</span></h3><p>回复不合适可以重新生成、切换版本；想试另一条路线，可以从某个节点新开分支，保留原来的对话。</p></li>
+        </ul>
+      </section>
+
+      <section id="presets" aria-labelledby="presets-title">
+        <div class="section-heading"><span class="section-number" aria-hidden="true">03</span><h2 id="presets-title">我装的两套预设</h2></div>
+        <p><strong>预设则主要影响“模型怎么演、怎么写”。</strong>它是一套提示词编排和生成设置，会影响文风、篇幅、叙事方式等，不是换了一个模型。拿我装的两套来说：</p>
+        <div class="preset">
+          <h3>小猫之神 <span class="version">Reborn 2.4.2</span></h3>
+          <p>我这套用于 Gemini，作者主打角色的“活人感”，并提供行动选项、小总结等配套模块。相关功能需要按作者说明搭配酒馆助手，也可以按自己的习惯开关。</p>
+        </div>
+        <div class="preset">
+          <h3>夏瑾天琴座 <span class="version">V2 Beta 1.0</span></h3>
+          <p>这个版本针对 DeepSeek V4.1 Flash，提供字数、文风、剧情推进和总结等设置，也有轻小说、西式文学等文风条目，适合想进一步调整叙事口味的人。</p>
+        </div>
+        <p class="closing">预设要看具体版本和模型适配，模块也不用全开。刚入门，先选一个模型、一张简单角色卡和一套适配的预设，聊出自己喜欢的感觉，再逐步补世界书和记忆功能。</p>
+      </section>
+    </article>
+  </main>
+
+  <footer class="site-footer"><span>酒馆手记 <span aria-hidden="true">/</span> SillyTavern</span><a href="#top">回到顶部 <span aria-hidden="true">↑</span></a></footer>
+</body>
+</html>
