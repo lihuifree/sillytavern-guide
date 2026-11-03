@@ -1,6 +1,6 @@
 # 酒馆手记
 
-一篇面向程序员的 SillyTavern 入门文章，介绍请求编排、agent 与记忆的区别、上下文管理、基础功能、小猫之神与夏瑾预设，以及类脑社区的资源入口。
+一篇 SillyTavern 入门文章，以自己的 GPTClub 中转接入为例，介绍请求编排、agent 与记忆的区别、上下文管理、基础功能、小猫之神与夏瑾预设，以及类脑社区的资源入口。
 
 发布地址：[酒馆手记](https://lihuifree.github.io/sillytavern-guide/)。
 

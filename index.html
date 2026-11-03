@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>从程序员的视角理解 SillyTavern · 酒馆手记</title>
-<meta name="description" content="从程序员的视角理解 SillyTavern：请求如何组装、上下文与记忆如何管理、两套预设怎样配合，以及类脑社区的资源入口。">
+<title>SillyTavern 入门：角色、记忆与预设 · 酒馆手记</title>
+<meta name="description" content="以自己的酒馆为例，聊聊角色、记忆与预设如何配合，通过 GPTClub 中转开始聊天，以及类脑社区的资源入口。">
 <meta property="og:type" content="article">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:url" content="https://lihuifree.github.io/sillytavern-guide/">
-<meta property="og:title" content="从程序员的视角理解 SillyTavern">
-<meta property="og:description" content="从程序员的视角理解 SillyTavern：请求如何组装、上下文与记忆如何管理、两套预设怎样配合，以及类脑社区的资源入口。">
+<meta property="og:title" content="SillyTavern 入门：角色、记忆与预设">
+<meta property="og:description" content="以自己的酒馆为例，聊聊角色、记忆与预设如何配合，通过 GPTClub 中转开始聊天，以及类脑社区的资源入口。">
 <meta name="theme-color" content="#fafbf9">
 <link rel="canonical" href="https://lihuifree.github.io/sillytavern-guide/">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
@@ -20,16 +20,17 @@
 <a class="skip-link" href="#article">跳到正文</a>
 <header class="site-header">
 <a class="wordmark" href="#top" aria-label="酒馆手记，回到顶部"><span class="mark" aria-hidden="true">酒</span>酒馆手记</a>
-<span class="site-note">给程序员的角色扮演入门</span>
+<span class="site-note">一个玩家的酒馆使用笔记</span>
 </header>
 <main id="article">
 <article>
 <header class="article-header">
 <p class="eyebrow">SILLYTAVERN / 技术与玩法</p>
-<h1>从程序员的视角理解 SillyTavern</h1>
+<h1>SillyTavern 入门：角色、记忆与预设</h1>
 <p class="deck">上下文、记忆、预设，以及类脑的资源生态。</p>
 <div class="article-meta"><time datetime="2026-11-03">2026 年 11 月 3 日</time><span aria-hidden="true">·</span><span>约 12 分钟</span><span aria-hidden="true">·</span><a href="./article.md">Markdown 原文</a></div>
-<div class="article-lead"><p>如果你已经写过 LLM API 调用，酒馆并不难理解：SillyTavern 是一套面向聊天和角色扮演的应用，提供模型连接、提示词组织、会话管理和扩展机制。它本身不提供模型，角色也不是训练进模型里的。以我自己的酒馆为例，模型通过 API 接入，人物、故事和生成规则由角色卡、世界书与预设共同组织。</p>
+<div class="article-lead"><p>SillyTavern，大家常说的“酒馆”，是一套面向聊天和角色扮演的应用，提供模型连接、提示词组织、会话管理和扩展机制。它本身不提供模型，导入角色卡也不会改变模型权重。人物、故事和生成规则由角色卡、世界书与预设共同组织。</p>
+<p>我自己的酒馆目前通过 <strong>GPTClub 中转</strong>接入模型。酒馆搭好后，按站内说明选好接口类型，填入接口地址和 API Key，再选择可用模型，就能先用简单角色卡开始聊天，不需要自行部署模型。预设和记忆功能可以在玩起来之后再逐步调整。</p>
 <p>它值得介绍的地方，是把很多原本要自己写代码的上下文管理工作，做成了可以配置、导入和复用的功能。</p></div>
 </header>
 <nav class="contents" aria-label="文章目录"><a href="#pipeline"><span aria-hidden="true">01</span>一轮请求</a>
@@ -59,7 +60,7 @@
 <p>“带记忆”和“agent”是两个维度。一个角色聊天应用可以只有“读取记忆 → 生成回复 → 更新记忆”这条链路；更强调自主性的 agent，还会围绕目标决定下一步、执行动作、观察结果，再继续行动。</p>
 <p>比如，同样扮演侦探：“记得昨天见过证人”是记忆能力；“发现线索不足，主动查询档案并根据结果调整调查”涉及行动与控制流程。仅仅保存聊天历史，或调过一次工具，都不足以描述后者。</p>
 <p>酒馆主要把角色扮演需要的上下文和交互控制暴露给使用者：你决定人物、背景、文风、模型，以及剧情从哪里分支。它也支持工具调用和扩展，可以承载更自动化的流程，所以两类系统没有绝对边界。</p>
-<p>对程序员来说，选择的重点是你想把精力放在哪里：自行实现 agent，可以完整控制状态、检索和执行循环；使用酒馆，可以先利用现成的编辑器、会话操作和社区资源，再在需要的地方加脚本。两条路线都能做角色扮演，也都要处理上下文与状态的一致性。</p>
+<p>选择的重点是你想把精力放在哪里：自行实现 agent，可以完整控制状态、检索和执行循环；使用酒馆，可以先利用现成的编辑器、会话操作和社区资源，再在需要的地方加脚本。两条路线都能做角色扮演，也都要处理上下文与状态的一致性。</p>
 </section>
 
 <section id="memory" aria-labelledby="memory-title">
@@ -140,7 +141,7 @@
 <p>酒馆提供应用，模型服务负责推理，类脑则提供创作者、作品和经验交流。社区里不只有角色卡，还有世界书、预设、插件、工具、教程，以及针对模型表现的讨论。它的价值在于能找到一套作品的完整上下文：作者想实现什么、依赖哪些组件、哪个版本有问题，以及后续如何修正。</p>
 <p>我通常从<a href="https://odysseia-forum-webpage.pages.dev/">类脑索引</a>开始。它提供搜索、标签、书单和分类入口，可以先选角色卡、世界书、预设或插件，再按题材和玩法缩小范围。找到作品后回到 Discord 作者原帖，看发布说明、最新更新和置顶，而不是只凭排行榜下载。</p>
 <p>读帖时重点看四件事：适配模型与版本、必备扩展、卡或预设的实际下载位置、当前已知问题。简介封面未必是可导入的角色卡，旧主楼也未必包含最新适配说明。初次加入需要按社区当前要求完成验证并获得相应频道权限，附件使用和转载则按作者说明处理。</p>
-<p>对程序员而言，社区的 MVU、变量、前端、数据库等标签很有参考价值，但标签不是完整依赖清单。它们可能对应一套脚本和状态协议，值得像看开源项目一样，先读说明、确认版本，再逐步接入。</p>
+<p>社区的 MVU、变量、前端、数据库等标签很有参考价值，但标签不是完整依赖清单。它们可能对应一套脚本和状态协议，值得像看开源项目一样，先读说明、确认版本，再逐步接入。</p>
 </section>
 
 <section id="starting" aria-labelledby="starting-title">
