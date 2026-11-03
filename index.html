@@ -1,77 +1,166 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <title>酒馆怎么玩：角色、世界、记忆和预设</title>
-  <meta name="description" content="以自己的 SillyTavern 为例，聊聊酒馆与带记忆角色扮演 agent 的区别、四个基础功能，以及小猫之神和夏瑾两套预设。">
-  <meta property="og:type" content="article">
-  <meta property="og:locale" content="zh_CN">
-  <meta property="og:url" content="https://lihuifree.github.io/sillytavern-guide/">
-  <meta property="og:title" content="酒馆怎么玩：角色、世界、记忆和预设">
-  <meta property="og:description" content="一篇给新玩家的简短介绍：认识角色卡、世界书、用户人设和剧情分支，再看看小猫之神与夏瑾。">
-  <meta name="theme-color" content="#f5f3ed">
-  <link rel="canonical" href="https://lihuifree.github.io/sillytavern-guide/">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>从程序员的视角理解 SillyTavern · 酒馆手记</title>
+<meta name="description" content="从程序员的视角理解 SillyTavern：请求如何组装、上下文与记忆如何管理、两套预设怎样配合，以及类脑社区的资源入口。">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://lihuifree.github.io/sillytavern-guide/">
+<meta property="og:title" content="从程序员的视角理解 SillyTavern">
+<meta property="og:description" content="从程序员的视角理解 SillyTavern：请求如何组装、上下文与记忆如何管理、两套预设怎样配合，以及类脑社区的资源入口。">
+<meta name="theme-color" content="#fafbf9">
+<link rel="canonical" href="https://lihuifree.github.io/sillytavern-guide/">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles.css?v=20261103-2">
 </head>
 <body id="top">
-  <a class="skip-link" href="#article">跳到正文</a>
-  <header class="site-header">
-    <a class="wordmark" href="#top" aria-label="酒馆手记，回到顶部"><span class="mark" aria-hidden="true">酒</span>酒馆手记</a>
-    <span class="site-note">一个玩家的入门分享</span>
-  </header>
+<a class="skip-link" href="#article">跳到正文</a>
+<header class="site-header">
+<a class="wordmark" href="#top" aria-label="酒馆手记，回到顶部"><span class="mark" aria-hidden="true">酒</span>酒馆手记</a>
+<span class="site-note">给程序员的角色扮演入门</span>
+</header>
+<main id="article">
+<article>
+<header class="article-header">
+<p class="eyebrow">SILLYTAVERN / 技术与玩法</p>
+<h1>从程序员的视角理解 SillyTavern</h1>
+<p class="deck">上下文、记忆、预设，以及类脑的资源生态。</p>
+<div class="article-meta"><time datetime="2026-11-03">2026 年 11 月 3 日</time><span aria-hidden="true">·</span><span>约 12 分钟</span><span aria-hidden="true">·</span><a href="./article.md">Markdown 原文</a></div>
+<div class="article-lead"><p>如果你已经写过 LLM API 调用，酒馆并不难理解：SillyTavern 是一套面向聊天和角色扮演的应用，提供模型连接、提示词组织、会话管理和扩展机制。它本身不提供模型，角色也不是训练进模型里的。以我自己的酒馆为例，模型通过 API 接入，人物、故事和生成规则由角色卡、世界书与预设共同组织。</p>
+<p>它值得介绍的地方，是把很多原本要自己写代码的上下文管理工作，做成了可以配置、导入和复用的功能。</p></div>
+</header>
+<nav class="contents" aria-label="文章目录"><a href="#pipeline"><span aria-hidden="true">01</span>一轮请求</a>
+<a href="#agent"><span aria-hidden="true">02</span>与 agent 的区别</a>
+<a href="#memory"><span aria-hidden="true">03</span>上下文与记忆</a>
+<a href="#basics"><span aria-hidden="true">04</span>基础功能</a>
+<a href="#presets"><span aria-hidden="true">05</span>两套预设</a>
+<a href="#community"><span aria-hidden="true">06</span>类脑社区</a>
+<a href="#starting"><span aria-hidden="true">07</span>配置与排查</a></nav>
+<section id="pipeline" aria-labelledby="pipeline-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">01</span><h2 id="pipeline-title">一轮对话，酒馆在做什么</h2></div>
+<p>在常见的 Chat Completions 用法里，模型主要依据这一次请求中的内容生成回复。上一轮聊过什么，要由应用再次提供，不能把 API 当作已经记住全部对话的有状态对象。</p>
+<p>酒馆的一轮生成可以概括为下面的流程。这里表示职责，不表示固定的消息排列顺序：</p>
+<pre><code class="text language-text">角色卡 / 用户人设 / 世界书 / 预设规则
+最近对话 / 作者注释 / 已启用的记忆与工具
+                    ↓
+按位置、消息角色、触发条件和 token 预算组织请求
+                    ↓
+模型 API → 回复 / 工具调用 → 显示、存档与扩展处理
+</code></pre>
+<p>同样一句“我推门进去”，前面放了什么设定、过去发生过什么、要求怎样叙述，都会影响结果。你在酒馆里调的很多开关，实际是在改变这次请求的输入与处理方式。</p>
+<p>因此，“本地部署酒馆”指运行这套应用；模型可以在本地，也可以在远端。使用远端 API 时，本轮组装出的上下文仍会发送给所选服务。更换模型通常可以保留角色与会话，但文风、指令遵循和格式兼容性需要重新观察。</p>
+</section>
 
-  <main id="article">
-    <article>
-      <header class="article-header">
-        <p class="eyebrow">SILLYTAVERN / 入门</p>
-        <h1>酒馆怎么玩<span>角色、世界、记忆和预设</span></h1>
-        <div class="article-meta"><time datetime="2026-11-03">2026 年 11 月 3 日</time><span aria-hidden="true">·</span><span>约 3 分钟</span></div>
-        <p class="intro">SillyTavern，大家常说的“酒馆”，是一款开源的 AI 聊天前端。它负责组织角色设定、背景资料和聊天记录，再交给接入的模型生成回复。模型可以通过 API 接入，所以换模型时，也能继续使用自己的角色卡和故事。</p>
-      </header>
+<section id="agent" aria-labelledby="agent-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">02</span><h2 id="agent-title">它和带记忆的角色扮演 agent 有什么区别</h2></div>
+<p>“带记忆”和“agent”是两个维度。一个角色聊天应用可以只有“读取记忆 → 生成回复 → 更新记忆”这条链路；更强调自主性的 agent，还会围绕目标决定下一步、执行动作、观察结果，再继续行动。</p>
+<p>比如，同样扮演侦探：“记得昨天见过证人”是记忆能力；“发现线索不足，主动查询档案并根据结果调整调查”涉及行动与控制流程。仅仅保存聊天历史，或调过一次工具，都不足以描述后者。</p>
+<p>酒馆主要把角色扮演需要的上下文和交互控制暴露给使用者：你决定人物、背景、文风、模型，以及剧情从哪里分支。它也支持工具调用和扩展，可以承载更自动化的流程，所以两类系统没有绝对边界。</p>
+<p>对程序员来说，选择的重点是你想把精力放在哪里：自行实现 agent，可以完整控制状态、检索和执行循环；使用酒馆，可以先利用现成的编辑器、会话操作和社区资源，再在需要的地方加脚本。两条路线都能做角色扮演，也都要处理上下文与状态的一致性。</p>
+</section>
 
-      <nav class="contents" aria-label="文章目录">
-        <a href="#memory"><span aria-hidden="true">01</span>角色与记忆</a>
-        <a href="#basics"><span aria-hidden="true">02</span>基础功能</a>
-        <a href="#presets"><span aria-hidden="true">03</span>常用预设</a>
-      </nav>
+<section id="memory" aria-labelledby="memory-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">03</span><h2 id="memory-title">记忆不是一个开关</h2></div>
+<p>先区分两件事：聊天文件保存了多少内容，以及模型这一轮实际看到了多少内容。前者可以很长，后者受模型、接口和配置的上下文预算限制。</p>
+<p>举个简化例子：如果接口共享一个 32K token 的输入输出窗口，预留 4K 回复，角色、预设和背景占 6K，留给原始聊天的大约就是 22K，还要考虑消息包装等开销。把酒馆里的上限调大，不会改变服务端的真实限制。</p>
+<p>长线剧情通常要组合几种手段：</p>
+<div class="table-wrap" role="region" aria-label="记忆方式比较表，可横向滚动" tabindex="0"><table>
+<thead>
+<tr>
+<th>方式</th>
+<th>主要作用</th>
+<th>容易出的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最近聊天</td>
+<td>保留刚发生的对话和细节</td>
+<td>越早的内容越容易被挤出窗口</td>
+</tr>
+<tr>
+<td>剧情摘要</td>
+<td>将旧情节压缩成较短文本</td>
+<td>细节丢失、总结错误、反复更新后偏移</td>
+</tr>
+<tr>
+<td>向量检索</td>
+<td>按语义相关性找回旧片段</td>
+<td>可能漏检，也可能找到相似但不适用的内容</td>
+</tr>
+<tr>
+<td>结构化状态</td>
+<td>保存地点、物品、任务阶段、关系等字段</td>
+<td>提取错误、更新遗漏、状态与正文不同步</td>
+</tr>
+</tbody>
+</table></div>
+<p class="table-hint">窄屏下可横向滑动表格，查看完整内容。</p>
+<p>这些机制解决的问题不同。摘要适合保留事件脉络，检索适合补回分散的信息，变量或数据库适合维护明确的游戏状态。检索出来的内容还要进入请求，模型才能利用它；状态表有 schema，也只能约束结构，不能证明里面的事实正确。</p>
+<p>酒馆有摘要、向量检索等扩展，社区还提供变量与数据库方案。它们需要实际启用、配置和验证。看到界面上有一张状态表，并不代表模型这一轮读到了它，也不代表每次回复后都正确更新了。</p>
+</section>
 
-      <section id="memory" aria-labelledby="memory-title">
-        <div class="section-heading"><span class="section-number" aria-hidden="true">01</span><h2 id="memory-title">角色与记忆</h2></div>
-        <p>如果你熟悉的是设定好人物、让系统自动记住往事的成品角色扮演 agent，酒馆的特点是把更多控制项直接交到你手里：谁来演、你扮演谁、故事发生在哪里、用什么文风，以及从哪个节点换一种剧情走向。</p>
-        <p>比如玩一段侦探故事，你可以给角色写好性格，用世界书放城市和组织背景，再从某次审问处分支，尝试另一种选择。你既能作为人物参与，也能调整故事的规则。</p>
-        <p>两者的能力有重叠。<strong>“记住”也不等于“聊天记录存着”</strong>：每次发给模型的内容受上下文长度限制。酒馆可以配合摘要、检索或数据库扩展保留旧剧情，但需要相应配置，也不能保证永不遗忘。</p>
-      </section>
+<section id="basics" aria-labelledby="basics-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">04</span><h2 id="basics-title">几个基础功能，分别负责什么</h2></div>
+<h3>角色卡与用户人设：定义对话双方</h3>
+<p>角色卡通常包含人物描述、性格、场景、开场白和示例对话；复杂卡还可能携带世界书、正则与脚本。它可以定义一个人物，也可以定义一组人物和一套冒险场景。</p>
+<p>常见的 PNG 角色卡，本质上是在图片元数据里携带 JSON。酒馆读取其中的设定，不是让模型看图猜人物。因此应下载原始卡文件，截图或转换图片格式可能丢掉卡数据。用户人设则定义“我是谁”，例如身份、背景和与对方的关系，避免每次重新交代。</p>
+<h3>世界书：按条件装入背景</h3>
+<p>World Info / Lorebook 可以把城市、组织、人物关系拆成条目。比如对话提到“灰港”，便激活当地势力和规则；核心世界观也可以设为常驻。实际激活还受扫描范围、配置、优先级与预算等影响。</p>
+<p>可以把它理解为带触发规则的背景注入系统，而不能直接等同向量数据库。普通关键词条目也能工作；不触发的条目通常不进入请求，进入之后仍占上下文。它也不会天然把每轮新剧情自动写回设定。</p>
+<h3>作者注释：短期导演指令</h3>
+<p>Author’s Note 适合放“当前是审讯场景，先保持嫌疑人的戒心”“不要提前揭晓凶手”这样的短指令，可以按位置、深度和间隔插入。人物长期性格放角色卡，场景临时要求放作者注释，通常更容易管理。</p>
+<p>它与角色卡作者留给读者的使用说明不是同一个字段，也不是自动记忆功能。</p>
+<h3>重生成、编辑与分支：控制会话走向</h3>
+<p>一次回复不合适，可以重生成并切换不同版本；某句话写错，可以编辑；想试另一种选择，可以从已有节点建立分支。它们改变的是会话内容与后续上下文，让你能像调试一段交互流程一样调整故事。</p>
+<p>如果某个扩展把变量或数据库另存，还要确认这些状态是否随分支同步。聊天分支不能自动保证所有第三方状态也完成了快照和回滚。</p>
+<h3>正则与扩展：处理文本，补上交互能力</h3>
+<p>正则常用于清理标签、折叠内容、调整显示，也可能作用于输入或发给模型的文本，要区分“仅显示”和“仅提示词”等范围。界面里隐藏了某段文字，不一定代表它没有送给模型。</p>
+<p>酒馆助手、变量框架等扩展则能支持脚本、交互面板和状态更新。看到一张带背包、地图或任务面板的卡，可以把它视为附带运行依赖的小应用，按作者清单装配会更稳妥。</p>
+</section>
 
-      <section id="basics" aria-labelledby="basics-title">
-        <div class="section-heading"><span class="section-number" aria-hidden="true">02</span><h2 id="basics-title">四个基础功能</h2></div>
-        <p>刚开始，认识这几个功能就够了：</p>
-        <ul class="feature-list">
-          <li><h3>角色卡<span>决定和谁玩</span></h3><p>打包人物性格、身份、开场白和示例对话；有的卡还包含一整套故事场景。导入后就能按设定开始聊天。</p></li>
-          <li><h3>用户人设<span>决定自己是谁</span></h3><p>可以设成旅人、侦探或角色的旧友，把身份和背景保存下来，减少反复交代。</p></li>
-          <li><h3>世界书<span>放故事的背景资料</span></h3><p>地点、组织、人物关系都能拆成条目，按关键词触发或设为常驻。它通常是设定库，并不会自动记下所有剧情。</p></li>
-          <li><h3>重生成和分支<span>尝试不同走向</span></h3><p>回复不合适可以重新生成、切换版本；想试另一条路线，可以从某个节点新开分支，保留原来的对话。</p></li>
-        </ul>
-      </section>
+<section id="presets" aria-labelledby="presets-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">05</span><h2 id="presets-title">我装的两套预设</h2></div>
+<p>预设主要组织提示词和生成设置：各段指令放在哪里、是否启用、输出多长、采用什么叙事方式。角色卡偏向“谁在什么场景里”，预设偏向“怎样生成”，但两者可能写入重叠甚至相互冲突的规则。</p>
+<h3>小猫之神 Reborn 2.4.2</h3>
+<p>我这套用于 Gemini。作者主打角色的“活人感”，包含叙事相关指令，以及行动选项、小总结等可选模块，配套功能需要结合酒馆助手等依赖使用。它不是一个单纯的温度参数组合，而是一整套生成与展示约定。</p>
+<p>这类预设要把提示词、正则、脚本和工具绑定当作一个整体看。我之前排查过一种空回复：生成指令仍要求调用某个工具，但请求里已经没有该工具。只关掉界面上的一个模块，不一定就清除了所有关联配置。</p>
+<h3>夏瑾天琴座 V2 Beta 1.0</h3>
+<p>我最近安装的这个版本针对 DeepSeek V4.1 Flash，提供字数、文风、剧情推进、总结等条目，也包含轻小说、西式文学等风格选项。它适合用来理解“同一个角色怎样受到不同写作规则影响”。</p>
+<p>这些是可供选择的模块，不表示我全部开启，也不是越多越好。尤其当角色卡自带文风、总结或变量流程时，要避免叠加重复要求。预设里的思考提示与模型原生推理开关也不是一回事，适配关系应按具体版本说明核对。</p>
+<p>这两套是我实际装过的例子，不是通用质量排名。换模型时，除了名称，还要检查消息角色、参数、工具调用和输出格式是否兼容。</p>
+</section>
 
-      <section id="presets" aria-labelledby="presets-title">
-        <div class="section-heading"><span class="section-number" aria-hidden="true">03</span><h2 id="presets-title">我装的两套预设</h2></div>
-        <p><strong>预设则主要影响“模型怎么演、怎么写”。</strong>它是一套提示词编排和生成设置，会影响文风、篇幅、叙事方式等，不是换了一个模型。拿我装的两套来说：</p>
-        <div class="preset">
-          <h3>小猫之神 <span class="version">Reborn 2.4.2</span></h3>
-          <p>我这套用于 Gemini，作者主打角色的“活人感”，并提供行动选项、小总结等配套模块。相关功能需要按作者说明搭配酒馆助手，也可以按自己的习惯开关。</p>
-        </div>
-        <div class="preset">
-          <h3>夏瑾天琴座 <span class="version">V2 Beta 1.0</span></h3>
-          <p>这个版本针对 DeepSeek V4.1 Flash，提供字数、文风、剧情推进和总结等设置，也有轻小说、西式文学等文风条目，适合想进一步调整叙事口味的人。</p>
-        </div>
-        <p class="closing">预设要看具体版本和模型适配，模块也不用全开。刚入门，先选一个模型、一张简单角色卡和一套适配的预设，聊出自己喜欢的感觉，再逐步补世界书和记忆功能。</p>
-      </section>
-    </article>
-  </main>
+<section id="community" aria-labelledby="community-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">06</span><h2 id="community-title">类脑是什么，怎么找资源</h2></div>
+<p>类脑是围绕 AI、角色扮演和相关工具展开交流的中文社区，主要讨论与创作发布在 Discord 上。你可能见到“类脑 ΟΔΥΣΣΕΙΑ”和“类脑 ΙΛΙΑΣ”等服务器名称；浏览时以当前入口和频道说明为准。</p>
+<p>酒馆提供应用，模型服务负责推理，类脑则提供创作者、作品和经验交流。社区里不只有角色卡，还有世界书、预设、插件、工具、教程，以及针对模型表现的讨论。它的价值在于能找到一套作品的完整上下文：作者想实现什么、依赖哪些组件、哪个版本有问题，以及后续如何修正。</p>
+<p>我通常从<a href="https://odysseia-forum-webpage.pages.dev/">类脑索引</a>开始。它提供搜索、标签、书单和分类入口，可以先选角色卡、世界书、预设或插件，再按题材和玩法缩小范围。找到作品后回到 Discord 作者原帖，看发布说明、最新更新和置顶，而不是只凭排行榜下载。</p>
+<p>读帖时重点看四件事：适配模型与版本、必备扩展、卡或预设的实际下载位置、当前已知问题。简介封面未必是可导入的角色卡，旧主楼也未必包含最新适配说明。初次加入需要按社区当前要求完成验证并获得相应频道权限，附件使用和转载则按作者说明处理。</p>
+<p>对程序员而言，社区的 MVU、变量、前端、数据库等标签很有参考价值，但标签不是完整依赖清单。它们可能对应一套脚本和状态协议，值得像看开源项目一样，先读说明、确认版本，再逐步接入。</p>
+</section>
 
-  <footer class="site-footer"><span>酒馆手记 <span aria-hidden="true">/</span> SillyTavern</span><a href="#top">回到顶部 <span aria-hidden="true">↑</span></a></footer>
+<section id="starting" aria-labelledby="starting-title">
+<div class="section-heading"><span class="section-number" aria-hidden="true">07</span><h2 id="starting-title">从一个可观察的最小组合开始</h2></div>
+<p>第一次配置，可以先固定一个模型、一张简单文字卡和一套适配预设，开新对话跑通几轮，再加入世界书与记忆扩展。每次只改一类配置，比较人设、叙事、状态更新和响应时间，容易找到真正影响体验的变量。</p>
+<p>排查时按链路看：接口有没有返回正文，最终提示词是否包含预期设定，历史是否被预算挤掉，世界书是否触发，工具和脚本是否配套，最后再看正则是否隐藏或改写了输出。这样比把所有异常都归因于“模型变笨了”更容易定位问题。</p>
+<p>角色扮演的连贯性既依赖模型，也依赖应用持续提供什么信息、保存什么状态。酒馆把这些环节变得可见、可调，这也是它对熟悉 LLM 开发的人有意思的地方。</p>
+</section>
+
+<section id="references" class="references" aria-labelledby="references-title">
+<div class="section-heading"><h2 id="references-title">继续阅读</h2></div>
+<ul>
+<li><a href="https://github.com/SillyTavern/SillyTavern">SillyTavern 项目</a>与<a href="https://docs.sillytavern.app/">官方文档</a>：安装、功能和配置说明。</li>
+<li><a href="https://odysseia-forum-webpage.pages.dev/">类脑索引</a>：检索作品与资源；具体版本以作者原帖为准。</li>
+<li><a href="https://wiki.xn--35zx7g.org/">类脑智识库</a>：索引站“关于”页面提供的知识入口。</li>
+</ul>
+<p>本文以我安装的版本为例，写于 2026 年 11 月 3 日，不代表各项目的最新版本。</p>
+</section>
+</article>
+</main>
+<footer class="site-footer"><span>酒馆手记 <span aria-hidden="true">/</span> SillyTavern</span><a href="#top">回到顶部 <span aria-hidden="true">↑</span></a></footer>
 </body>
 </html>
