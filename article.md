@@ -174,6 +174,7 @@ Author’s Note 适合放“当前是审讯场景，先保持嫌疑人的戒心�
 
 ## 继续阅读
 
+- [认识类脑：酒馆角色卡背后的创作社区](https://lihuifree.github.io/sillytavern-guide/leinao/)：继续了解作品、找卡路线与社区交流。
 - [SillyTavern 项目](https://github.com/SillyTavern/SillyTavern)与[官方文档](https://docs.sillytavern.app/)：安装、功能和配置说明。
 - [类脑索引](https://odysseia-forum-webpage.pages.dev/)：检索作品与资源；具体版本以作者原帖为准。
 - [类脑智识库](https://wiki.xn--35zx7g.org/)：索引站“关于”页面提供的知识入口。

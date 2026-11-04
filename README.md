@@ -1,13 +1,17 @@
 # 酒馆手记
 
-一篇 SillyTavern 入门文章，先介绍角色互动、文字冒险、互动小说、模拟经营、创作和情境演练等用途，再说明上下文、记忆、基础功能、小猫之神与夏瑾预设，以及类脑社区的资源入口。文末以自己使用的 GPTClub 中转为例，介绍模型接入步骤与起步建议。
+两篇互补的 SillyTavern 使用笔记：第一篇介绍玩法、记忆、基础功能与预设；第二篇介绍类脑社区的作品、书单、主题赛事、找卡与参与交流的方式，并衔接 Club 的酒馆入门博文。
 
 发布地址：[酒馆手记](https://lihuifree.github.io/sillytavern-guide/)。
+
+社区篇：[认识类脑：酒馆角色卡背后的创作社区](https://lihuifree.github.io/sillytavern-guide/leinao/)。
 
 ## 文件
 
 - `index.html`：文章正文、页面结构和分享摘要。
 - `article.md`：同一篇文章的 Markdown 原文，方便阅读与修改。
+- `leinao/index.html`：类脑社区介绍的独立页面。
+- `leinao/article.md`：社区篇 Markdown 成稿，可从页面下载。
 - `styles.css`：桌面、手机和打印样式。
 - `favicon.svg`：本站图标。
 - `.nojekyll`：让 GitHub Pages 直接发布静态文件。
@@ -16,4 +20,4 @@
 
 ## 预览与维护
 
-在此目录运行 `python3 -m http.server 8765`，然后打开 `http://localhost:8765/`。修改正文时同步更新 `article.md` 与 `index.html`；网站直接发布静态 HTML，不会自动把 Markdown 转成网页。改动推送到 `main` 后，GitHub Pages 会自动部署。
+在此目录运行 `python3 -m http.server 8765`，然后打开 `http://localhost:8765/`，社区篇路径是 `/leinao/`。修改正文时同步更新该篇的 `article.md` 与 `index.html`；网站直接发布静态 HTML，不会自动把 Markdown 转成网页。改动推送到 `main` 后，GitHub Pages 会自动部署。
